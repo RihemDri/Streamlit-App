@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px 
+import pickle 
 
 
 #page title 
@@ -10,8 +11,8 @@ st.title("welcome to my web app ")
 #if name :
   #  st.success(f"Hi{name} welcome to my app ")
 
-page = st.sidebar.radio("Go to", ["🏠 Home", "🧠 Model"])
-if page == "🏠 Home":
+page = st.sidebar.radio("Go to", ["🏠 Data", "🧠 Model"])
+if page == "🏠 Data":
   # ------------  KEEP DATA AFTER REFRESH ------------
     if "df" not in st.session_state:
         st.session_state.df = None
@@ -101,10 +102,39 @@ if page == "🏠 Home":
             st.plotly_chart(fig_hist)
 elif page == "🧠 Model":
  
-    st.title("Data Page")
-    st.write("This is the data page where you can explore your dataset.")
+    #st.title("model  Page")
+    st.title("🩺 Diabetes Prediction App")
+    st.write("Enter the patient's medical details:")
+    # Input fields for user data
 
 
+      # ------------  KEEP DATA AFTER REFRESH ------------
+    if "df" not in st.session_state:
+        st.session_state.df = None
+        #If there is NO variable named "df" saved in session_state, create it and set it to None.
 
+    uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"]) 
 
+    # if a new file is uploaded ⇒ read & save it
+    if uploaded_file is not None:
+        st.session_state.df = pd.read_csv(uploaded_file)
+    # get the saved dataframe
+    df = st.session_state.df
+ 
+     # Load the trained model
+    with open('random_forest_model.pkl', 'rb') as file:
+         model = pickle.load(file)
 
+    # input fields for user data
+    # unput fields (same as training data)
+    Preg = st.number_input("Pregnancies", min_value=0, max_value=20, value=0,help="Number of times pregnant")
+    glucose = st.number_input("Glucose", min_value=0, max_value=300, value=100,help="Blood sugar level (mg/dL)")
+    bp = st.number_input("Blood Pressure", min_value=0, max_value=200, value=70,help="Diastolic blood pressure (mm Hg)")
+    skin = st.number_input("Skin Thickness", min_value=0, max_value=100, value=20,help="Triceps skin fold thickness (mm)")
+    insulin = st.number_input("Insulin", min_value=0, max_value=900, value=79,help="2-Hour serum insulin (mu U/ml)")
+    bmi = st.number_input("BMI", min_value=0.0, max_value=70.0, value=25.0,help="Body mass index (weight in kg/(height in m)^2)")
+    dpf = st.number_input("Diabetes Pedigree Function", min_value=0.0, max_value=3.0, value=0.5,help="Family history likelihood of diabetes")
+    age = st.number_input("Age", min_value=1, max_value=120,    value=30,help="Age in years") 
+     
+
+      
