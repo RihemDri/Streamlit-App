@@ -4,6 +4,11 @@ import numpy as np
 import plotly.express as px 
 import pickle 
 
+st.set_page_config(
+    page_title="Data Analysis and Diabetes Prediction App",
+    page_icon="👩🏻‍⚕️"
+)
+
 
 #page title 
 st.title("welcome to my web app ")
@@ -100,6 +105,17 @@ if page == "🏠 Data":
 
             fig_hist = px.histogram(df,x=hist_col,nbins=bins, title=f"Histogram of {hist_col}")
             st.plotly_chart(fig_hist)
+
+
+
+    
+
+
+
+
+
+
+
 elif page == "🧠 Model":
  
     #st.title("model  Page")
@@ -124,17 +140,108 @@ elif page == "🧠 Model":
      # Load the trained model
     with open('random_forest_model.pkl', 'rb') as file:
          model = pickle.load(file)
+    
+ 
+
+
+
+
 
     # input fields for user data
     # unput fields (same as training data)
-    Preg = st.number_input("Pregnancies", min_value=0, max_value=20, value=0,help="Number of times pregnant")
-    glucose = st.number_input("Glucose", min_value=0, max_value=300, value=100,help="Blood sugar level (mg/dL)")
-    bp = st.number_input("Blood Pressure", min_value=0, max_value=200, value=70,help="Diastolic blood pressure (mm Hg)")
-    skin = st.number_input("Skin Thickness", min_value=0, max_value=100, value=20,help="Triceps skin fold thickness (mm)")
-    insulin = st.number_input("Insulin", min_value=0, max_value=900, value=79,help="2-Hour serum insulin (mu U/ml)")
-    bmi = st.number_input("BMI", min_value=0.0, max_value=70.0, value=25.0,help="Body mass index (weight in kg/(height in m)^2)")
-    dpf = st.number_input("Diabetes Pedigree Function", min_value=0.0, max_value=3.0, value=0.5,help="Family history likelihood of diabetes")
-    age = st.number_input("Age", min_value=1, max_value=120,    value=30,help="Age in years") 
+    col1, col2 = st.columns(2)
+    with col1:
+        Preg = st.number_input("Pregnancies", min_value=0, max_value=20, value=0,help="Number of times pregnant")
+        glucose = st.number_input("Glucose", min_value=0, max_value=300, value=100,help="Blood sugar level (mg/dL)")
+        bp = st.number_input("Blood Pressure", min_value=0, max_value=200, value=70,help="Diastolic blood pressure (mm Hg)")
+        skin = st.number_input("Skin Thickness", min_value=0, max_value=100, value=20,help="Triceps skin fold thickness (mm)")
+    with col2:
+        #insulin = st.number_input("Insulin", min_value=0, max_value=900, value=79,help="2-Hour serum insulin (mu U/ml)")
+        bmi = st.number_input("BMI", min_value=0.0, max_value=70.0, value=25.0,help="Body mass index (weight in kg/(height in m)^2)")
+        dpf = st.number_input("Diabetes Pedigree Function", min_value=0.0, max_value=3.0, value=0.5,help="Family history likelihood of diabetes")
+        age = st.number_input("Age", min_value=1, max_value=120,    value=30,help="Age in years") 
      
 
-      
+      #prepare the input data for prediction (in model format )
+    input_data = pd.DataFrame({'Pregnancies': [Preg],
+                               'Glucose': [glucose],
+                               'BloodPressure': [bp],
+                               'SkinThickness': [skin],
+                               #'Insulin': [insulin],
+                               'BMI': [bmi],
+                               'DiabetesPedigreeFunction': [dpf],
+                               'Age': [age]
+                               })
+    #display the input data
+    st.subheader("Input Data")
+    st.write(input_data)
+    
+
+    #add important features 
+    st.subheader("Important Features for Diabetes Prediction")
+    importances = model.feature_importances_
+    features =input_data.columns
+    #crete a dataframe for feature importance
+    feature_importance_df = pd.DataFrame({
+        'Feature': features,
+        'Importance': importances
+    }).sort_values(by='Importance', ascending=False)
+
+    with st.expander("👩🏻‍⚕️Important Features"):
+        #display feature importance
+        fig_importance = px.bar(
+            feature_importance_df,
+            x='Importance',
+            y='Feature',
+            orientation='h',
+            title='Feature Importance',
+            color='Importance',
+            color_continuous_scale='Viridis')
+        
+        st.plotly_chart(fig_importance)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # Prediction button
+    if st.button("Predict Diabetes"):
+        # Make prediction
+        prediction = model.predict(input_data)
+        st.subheader("Prediction Result")
+        st.write(prediction)
+        if prediction[0] == 1:
+            st.error("🩸The model predicts that the patient has diabetes.")
+        else:
+            st.success("✅ The model predicts that the patient does not have diabetes.")
+        
+        # Display prediction probabilities
+        probabilities = model.predict_proba(input_data)
+        st.write(probabilities)
+        st.metric(label="Probability of Diabetes", value=f"{probabilities[0][1]:.2f}")
+        # progress bar 
+        st.progress(int(probabilities[0][1]*100), text="Diabetes Probability")
+        st.subheader("Prediction Probabilities")
+        st.write(f"Probability of No Diabetes: {probabilities[0][0]:.2f}")
+        st.write(f"Probability of Diabetes: {probabilities[0][1]:.2f}")
+
+
+        # risk level interpretation
+        st.subheader("Risk Level Interpretation")
+        if probabilities[0][1] < 0.2:
+            st.success("Low Risk of Diabetes")
+        elif 0.2 <= probabilities[0][1] < 0.5:
+            st.warning("Moderate Risk of Diabetes")
+        else:
+            st.error("High Risk of Diabetes")
+
+     
