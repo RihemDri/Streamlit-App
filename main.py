@@ -107,15 +107,6 @@ if page == "🏠 Data":
             st.plotly_chart(fig_hist)
 
 
-
-    
-
-
-
-
-
-
-
 elif page == "🧠 Model":
  
     #st.title("model  Page")
@@ -142,11 +133,6 @@ elif page == "🧠 Model":
          model = pickle.load(file)
     
  
-
-
-
-
-
     # input fields for user data
     # unput fields (same as training data)
     col1, col2 = st.columns(2)
@@ -187,7 +173,7 @@ elif page == "🧠 Model":
         'Importance': importances
     }).sort_values(by='Importance', ascending=False)
 
-    with st.expander("👩🏻‍⚕️Important Features"):
+    with st.expander("⚕️Important Features"):
         #display feature importance
         fig_importance = px.bar(
             feature_importance_df,
@@ -204,14 +190,9 @@ elif page == "🧠 Model":
 
 
 
-
-
-
-
-
-
-
-
+        # ---------- INITIALISATION DU TABLEAU ----------
+    if "patients_data" not in st.session_state:
+        st.session_state.patients_data = []
 
     # Prediction button
     if st.button("Predict Diabetes"):
@@ -224,6 +205,34 @@ elif page == "🧠 Model":
         else:
             st.success("✅ The model predicts that the patient does not have diabetes.")
         
+                
+ # ✅ Sauvegarder les valeurs saisies dans la session
+        st.session_state.patients_data.append({
+        "Pregnancies": Preg,
+        "Glucose": glucose,
+        "BloodPressure": bp,
+        "SkinThickness": skin,
+        #"Insulin": insulin,
+        "BMI": bmi,
+        "DiabetesPedigreeFunction": dpf,
+        "Age": age,
+        "Prediction": "Diabetic" if prediction[0] == 1 else "Non-Diabetic",
+        "Probability": round(float(model.predict_proba(input_data)[0][1]), 3)})
+            # ---------- AFFICHER L’HISTORIQUE ----------
+    if len(st.session_state.patients_data) > 0:
+        st.subheader("🧾 Patients History")
+        df_history = pd.DataFrame(st.session_state.patients_data)
+        st.dataframe(df_history)
+     # Bouton pour tout effacer
+    if st.button("🗑️ Clear All History"):
+        st.session_state.patients_data = []
+        st.rerun()
+
+
+
+
+
+
         # Display prediction probabilities
         probabilities = model.predict_proba(input_data)
         st.write(probabilities)
